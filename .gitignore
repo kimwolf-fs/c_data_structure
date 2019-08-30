@@ -1,3 +1,7 @@
+#folder and other
+*cmake-build-debug
+*uploading.cfg
+
 # Prerequisites
 *.d
 
