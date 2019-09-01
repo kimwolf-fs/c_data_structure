@@ -1,268 +1,301 @@
 #include <stdio.h>
 #include <malloc.h>
-#include "DoubleCircularLinkedList.h"
+#include "double_circular_linked_list.h"
 
-static void clear(DoubleCircularLinkedList *This);
-static int isEmpty(DoubleCircularLinkedList *This);
-static int length(DoubleCircularLinkedList *This);
-static void print(DoubleCircularLinkedList *This);
-static void circlePrint(DoubleCircularLinkedList *This,int times);
-static int indexElem(DoubleCircularLinkedList *This, ElemType* x);
-static int indexNode(DoubleCircularLinkedList *This, Node* n);
-static int getElem(DoubleCircularLinkedList *This, int index, ElemType *e);
-static Node *getNode(DoubleCircularLinkedList *This, int index);
-static Node *getPriorNode(Node *n);
-static Node *getNextNode(Node *n);
-static int modifyElem(DoubleCircularLinkedList *This, int index, ElemType* e);
-static int deleteElem(DoubleCircularLinkedList *This, int index, ElemType* e);
-static int deleteNode(DoubleCircularLinkedList *This, Node* n);
-static int appendElem(DoubleCircularLinkedList *This, ElemType *e);
-static int insertElem(DoubleCircularLinkedList *This, int index, ElemType *e);
-static int popElem(DoubleCircularLinkedList *This, ElemType* e);
+static void clear(struct double_circular_linked_list *linked_list);
+static int is_empty(struct double_circular_linked_list *linked_list);
+static int length(struct double_circular_linked_list *linked_list);
+static void print(struct double_circular_linked_list *linked_list);
+static void circle_print(struct double_circular_linked_list *linked_list,int times);
+static int index_elem(struct double_circular_linked_list *linked_list, double_circular_elem_type* elem);
+static int index_node(struct double_circular_linked_list *linked_list, struct double_circular_linked_list_node* node);
+static int get_elem(struct double_circular_linked_list *linked_list, int index, double_circular_elem_type *elem);
+static struct double_circular_linked_list_node *get_node(struct double_circular_linked_list *linked_list, int index);
+static struct double_circular_linked_list_node *get_prior_node(struct double_circular_linked_list_node *node);
+static struct double_circular_linked_list_node *get_next_node(struct double_circular_linked_list_node *node);
+static int modify_elem(struct double_circular_linked_list *linked_list, int index, double_circular_elem_type* elem);
+static int insert_elem(struct double_circular_linked_list *linked_list, int index, double_circular_elem_type *elem);
+static int delete_node(struct double_circular_linked_list *linked_list, struct double_circular_linked_list_node *node);
+static int append_elem(struct double_circular_linked_list *linked_list, double_circular_elem_type *elem);
+static int pop_elem(struct double_circular_linked_list *linked_list, double_circular_elem_type *elem);
 
-DoubleCircularLinkedList *InitDoubleCircularLinkedList(){
-	DoubleCircularLinkedList *L = (DoubleCircularLinkedList *)malloc(sizeof(DoubleCircularLinkedList));
-	Node *p = (Node *)malloc(sizeof(Node));
-	L->This = p;
-	p->prior = p;
-	p->next = p;
-	L->clear = clear;
-	L->isEmpty = isEmpty;
-	L->length = length;
-	L->print = print;
-	L->circlePrint = circlePrint;
-	L->indexElem = indexElem;
-	L->indexNode = indexNode;
-	L->getElem = getElem;
-	L->getNode = getNode;
-	L->getPriorNode = getPriorNode;
-	L->getNextNode = getNextNode;
-	L->modifyElem = modifyElem;
-	L->deleteElem = deleteElem;
-	L->deleteNode = deleteNode;
-	L->appendElem = appendElem;
-	L->insertElem = insertElem;
-	L->popElem = popElem;
-	return L;
+//初始化链表
+struct double_circular_linked_list *init_double_circular_linked_list(){
+	//创建双循环链表类
+    struct double_circular_linked_list *linked_list =
+    		(struct double_circular_linked_list *)malloc(sizeof(struct double_circular_linked_list));
+	//创建头结点
+    struct double_circular_linked_list_node *node =
+    		(struct double_circular_linked_list_node *)malloc(sizeof(struct double_circular_linked_list_node));
+    linked_list->head = node;  //链表实例的this指向头结点
+    node->prior = node;     //只有一个节点，上一个也指向这个节点
+    node->next = node;      //只有一个节点，下一个也指向这个节点
+    linked_list->clear = clear;
+	linked_list->is_empty = is_empty;
+	linked_list->length = length;
+	linked_list->print = print;
+	linked_list->circle_print = circle_print;
+	linked_list->index_elem = index_elem;
+	linked_list->index_node = index_node;
+	linked_list->get_elem = get_elem;
+	linked_list->get_node = get_node;
+	linked_list->get_prior_node = get_prior_node;
+	linked_list->get_next_node = get_next_node;
+	linked_list->modify_elem = modify_elem;
+	linked_list->delete_node = delete_node;
+	linked_list->append_elem = append_elem;
+	linked_list->insert_elem = insert_elem;
+	linked_list->pop_elem = pop_elem;
+	return linked_list;
 }
 
-void DestroyDoubleCircularLinkedList(DoubleCircularLinkedList *L){
-	L->clear(L);
-	free(L->This);
-	free(L);
-	L = NULL;
+//销毁
+void destroy_double_circular_linked_list(struct double_circular_linked_list *linked_list){
+    linked_list->clear(linked_list);
+	free(linked_list->head);
+	free(linked_list);
+    linked_list = NULL;
 }
 
-static void clear(DoubleCircularLinkedList *This){
-	Node *head = This->This;
-	Node *p = This->This->next;
-	Node *temp = NULL;
-	while(p != head){
-		temp = p;
-		p = p->next;
-		free(temp);
-	} 
-	p = This->This;
-	p->next = head;
-	p->prior = head;
+//清除链表
+//会清除链表中的所有元素
+static void clear(struct double_circular_linked_list *linked_list){
+    struct double_circular_linked_list_node *head = linked_list->head;
+    struct double_circular_linked_list_node *next = linked_list->head->next;
+    struct double_circular_linked_list_node *temp = NULL;
+    while(next != head){
+        temp = next;
+        next = next->next;
+        free(temp);
+    }
+	head->prior = head;
+	head->next = head;
 }
 
-static int isEmpty(DoubleCircularLinkedList *This){
-	Node *p = This->This;
-	if(p->next == p){
+//判断链表是不是为空
+//返回0为空，1非空
+static int is_empty(struct double_circular_linked_list *linked_list){
+	struct double_circular_linked_list_node *head = linked_list->head;
+	if(head->next == head){
 		return 0;
 	}else{
 		return 1;
 	}
 }
 
-static int length(DoubleCircularLinkedList *This){
+//获取链表长度
+static int length(struct double_circular_linked_list *linked_list){
 	int j = 0;
-	Node *head = This->This;
-	Node *p = This->This->next;
-	while(p != head){
+	struct double_circular_linked_list_node *head = linked_list->head;
+	struct double_circular_linked_list_node *next = linked_list->head->next;
+	while(next != head){
 		j++;
-		p = p->next;
+		next = next->next;
 	} 
 	return j;
 }
 
-static void print(DoubleCircularLinkedList *This){
-	Node *head = This->This;
-	Node *p = This->This->next;
-	while(p != head){
-		printf("%d ", p->elem);
-		p = p->next;
-	} 
+//打印链表中的所有元素
+static void print(struct double_circular_linked_list *linked_list){
+	struct double_circular_linked_list_node *head = linked_list->head;
+	struct double_circular_linked_list_node *next = linked_list->head->next;
+	while(next != head){
+		printf("%d ", next->elem);
+		next = next->next;
+	}
 	printf("\n");
 }
 
-static void circlePrint(DoubleCircularLinkedList *This,int times){
-	Node *head = This->This;
+//循环打印times次
+static void circle_print(struct double_circular_linked_list *linked_list,int times){
+	struct double_circular_linked_list_node *head = linked_list->head;
 	int i = 0;
-	Node *p = This->This->next;
-	for(i = 0;i<times;){
-		if(p == head){
+	struct double_circular_linked_list_node *next = linked_list->head->next;
+	for(i = 0; i<times; ){
+		if(next == head){
 			i++;
 		}else{
-			printf("%d ", p->elem);
+			printf("%d ", next->elem);
 		}
-		p = p->next;
+		next = next->next;
 	}
 	printf("\n");
 }
 
-static int indexElem(DoubleCircularLinkedList *This, ElemType* e){
-	Node *head = This->This;
-	Node *p = This->This->next;
+//返回元素再链表中的位置
+//返回-1 没有该元素
+static int index_elem(struct double_circular_linked_list *linked_list, double_circular_elem_type* elem){
+	struct double_circular_linked_list_node *head = linked_list->head;
+	struct double_circular_linked_list_node *next = linked_list->head->next;
 	int pos = -1;
 	int j = 0;
-	while(p != head){
-		if(*e == p->elem){
+	while(next != head){
+		if(*elem == next->elem){
 			pos = j;
 		}
-		p = p->next;
+		next = next->next;
 		j++;
 	} 
 	return pos;
 }
 
-static int indexNode(DoubleCircularLinkedList *This, Node* n){
-	Node *head = This->This;
-	Node *p = This->This->next;
+//返回node在链表中的位置
+static int index_node(struct double_circular_linked_list *linked_list, struct double_circular_linked_list_node* node){
+	struct double_circular_linked_list_node *head = linked_list->head;
+	struct double_circular_linked_list_node *next = linked_list->head->next;
 	int pos = -1;
 	int j = 0;
-	while(p != head){
-		if(n == p){
+	while(next != head){
+		if(node == next){
 			pos = j;
 		}
-		p = p->next;
+		next = next->next;
 		j++;
 	} 
 	return pos;
 }
 
-static int getElem(DoubleCircularLinkedList *This, int index, ElemType *e){
-	Node *head = This->This;
-	Node *p = This->This->next;
+//获取 index 位置的元素
+static int get_elem(struct double_circular_linked_list *linked_list, int index, double_circular_elem_type *elem){
+	struct double_circular_linked_list_node *head = linked_list->head;
+	struct double_circular_linked_list_node *next = linked_list->head->next;
 	int j = 0;
-	while(p != head && j < index){
-		p = p->next;
+	while(next != head && j < index){
+		next = next->next;
 		j++;
 	} 
-	if(p == head || j > index) return -1;
-	*e = p->elem;
+	if(next == head || j > index){
+		return -1;
+	}
+	*elem = next->elem;
 	return 0;
 }
 
-static Node *getNode(DoubleCircularLinkedList *This, int index){
-	Node *head = This->This;
-	Node *p = This->This->next;
+//返回 index 位置的 node
+static struct double_circular_linked_list_node *get_node(struct double_circular_linked_list *linked_list, int index){
+	struct double_circular_linked_list_node *head = linked_list->head;
+	struct double_circular_linked_list_node *next = linked_list->head->next;
 	int j = 0;
-	while(p != head && j < index){
-		p = p->next;
+	while(next != head && j < index){
+		next = next->next;
 		j++;
 	} 
-	if(p == head || j > index) return NULL;
-	return p;
+	if(next == head || j > index) return NULL;
+	return next;
 }
 
-static Node *getPriorNode(Node *n){
-	return n->prior;
+//返回上一个节点
+static struct double_circular_linked_list_node *get_prior_node(struct double_circular_linked_list_node *node){
+	return node->prior;
 }
 
-static Node *getNextNode(Node *n){
-	return n->next;
+//返回 node 的下一个节点
+static struct double_circular_linked_list_node *get_next_node(struct double_circular_linked_list_node *node){
+	return node->next;
 }
 
-static int modifyElem(DoubleCircularLinkedList *This, int index, ElemType* e){
-	Node *head = This->This;
-	Node *p = This->This->next;
+//修改 index 位置的元素值
+static int modify_elem(struct double_circular_linked_list *linked_list, int index, double_circular_elem_type* elem){
+	struct double_circular_linked_list_node *head = linked_list->head;
+	struct double_circular_linked_list_node *next = linked_list->head->next;
 	int j = 0;
-	while(p != head && j < index){
-		p = p->next;
+	while(next != head && j < index){
+		next = next->next;
 		j++;
 	} 
-	if(p == head || j > index) return -1;
-	p->elem = *e;
+	if(next == head || j > index) return -1;
+	next->elem = *elem;
 	return 0;
 }
 
-static int insertElem(DoubleCircularLinkedList *This, int index, ElemType *e){
-	Node *head = This->This;
-	Node *p = This->This;
+//在 index 位置插入元素
+static int insert_elem(struct double_circular_linked_list *linked_list, int index, double_circular_elem_type *elem){
+	struct double_circular_linked_list_node *head = linked_list->head;
+	struct double_circular_linked_list_node *next = linked_list->head->next;
 	int j = 0;
-	Node *temp = (Node *)malloc(sizeof(Node));
-	if(!temp) return -1;
-	while(p->next != head && j < index){
-		p = p->next;
+	//创造一个中间节点
+	struct double_circular_linked_list_node *temp =
+			(struct double_circular_linked_list_node *)malloc(sizeof(struct double_circular_linked_list_node));
+	if(!temp){
+		return -1;
+	}
+	//找到 index 的位置
+	while(next->next != head && j < index){
+		next = next->next;
 		j++;
 	} 
-	if(p->next == head || j > index) return -1;
-	temp->elem = *e;
-	p->next->prior = temp;
-	temp->prior = p;
-	temp->next = p->next;
-	p->next = temp;
+	if(next->next == head || j > index){
+		return -1;
+	}
+	temp->elem = *elem;
+	next->next->prior = temp;
+	temp->prior = next;
+	temp->next = next->next;
+	next->next = temp;
 	return 0;
 }
 
-static int deleteNode(DoubleCircularLinkedList *This, Node* n){
-	if(indexNode(This, n)>=0){
-		n->prior->next = n->next;
-		n->next->prior = n->prior;
-		free(n);
+//删除 node 节点
+static int delete_node(struct double_circular_linked_list *linked_list, struct double_circular_linked_list_node *node){
+	if(index_node(linked_list, node)>=0){
+		node->prior->next = node->next;
+		node->next->prior = node->prior;
+		free(node);
 	}
 	return 0;
 }
 
-static int deleteElem(DoubleCircularLinkedList *This, int index, ElemType* e){
-	Node *head = This->This;
-	Node *p = This->This;
-	Node *temp = NULL;
+static int delete_elem(struct double_circular_linked_list *linked_list, int index, double_circular_elem_type* elem){
+	struct double_circular_linked_list_node *head = linked_list->head;
+	struct double_circular_linked_list_node *next = linked_list->head->next;
+	struct double_circular_linked_list_node *temp = NULL;
 	int j = 0;
-	while(p->next != head && j < index){
-		p = p->next;
+	while(next->next != head && j < index){
+		next = next->next;
 		j++;
 	} 
-	if(p->next == head || j > index) return -1;
-	temp = p->next;
-	p->next = temp->next;
-	temp->next->prior = p;
-	*e = temp->elem;
+	if(next->next == head || j > index) return -1;
+	temp = next->next;
+	next->next = temp->next;
+	temp->next->prior = next;
+	*elem = temp->elem;
 	free(temp);
 	return 0;
 }
 
-static int appendElem(DoubleCircularLinkedList *This, ElemType *e){
-	Node *head = This->This;
-	Node *p = This->This->next;
-	Node *temp = (Node *)malloc(sizeof(Node));
+//在尾部添加元素
+static int append_elem(struct double_circular_linked_list *linked_list, double_circular_elem_type *elem){
+	struct double_circular_linked_list_node *head = linked_list->head;
+	struct double_circular_linked_list_node *next = linked_list->head->next;
+	struct double_circular_linked_list_node *temp =
+			(struct double_circular_linked_list_node *)malloc(sizeof(struct double_circular_linked_list_node));
 	if(!temp) return -1;
-	while(p->next != head){
-		p = p->next;
-	} 
-	temp->elem = *e;
-	temp->prior = p;
+	while(next->next != head){
+		next = next->next;
+	}
+	temp->elem = *elem;
+	temp->prior = next;
 	temp->next =  head;
-	p->next = temp;
+	next->next = temp;
 	head->prior = temp;
 	return 0;
 }
 
-static int popElem(DoubleCircularLinkedList *This, ElemType* e){
-	Node *head = This->This;
-	Node *p = This->This;
-	Node *temp = NULL;
-	while(p->next->next != head){
-		p = p->next;
-	} 
-	temp = p->next;
-	if(temp == head) return -1;
-	*e = temp->elem;
+static int pop_elem(struct double_circular_linked_list *linked_list, double_circular_elem_type *elem){
+	struct double_circular_linked_list_node *head = linked_list->head;
+	struct double_circular_linked_list_node *next = linked_list->head->next;
+	struct double_circular_linked_list_node *temp = NULL;
+	while(next->next->next != head){
+		next = next->next;
+	}
+	temp = next->next;
+	if(temp == head){
+		return -1;
+	}
+	*elem = temp->elem;
 	free(temp);
-	p->next = head;
-	head->prior = p;
+	next->next = head;
+	head->prior = next;
 	return 0;
 }
 

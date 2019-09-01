@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/DataStructure_C-master.iml" filepath="$PROJECT_DIR$/.idea/DataStructure_C-master.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/c_data_structure.iml" filepath="$PROJECT_DIR$/.idea/c_data_structure.iml" />
     </modules>
   </component>
 </project>
